@@ -3,6 +3,8 @@
 #include <random>
 #include <mpi.h>
 #include <sys/types.h>
+#include <cstring>
+
 using namespace std::chrono;
 
 int main(int argc, char *argv[]) {
@@ -17,6 +19,7 @@ int main(int argc, char *argv[]) {
   n = k * 256;
   // Check for user-defined global population.
   while (a < argc) {
+    // Population count argument.
     if (!strcmp("-n", argv[a])) {
       a++;
       if (a < argc) sscanf(argv[a], "%u", &n);
@@ -39,26 +42,22 @@ int main(int argc, char *argv[]) {
     M[i] = prng();
     // Keep running tab of local maximum.
     local_max = M[i] > local_max ? M[i] : local_max;
-    std::cerr << "M[" << i << "] = " << M[i] << std::endl;
   }
-
-  // Announce local maximum.
-  std::cerr << "max[" << r << "] = " << local_max << std::endl;
 
   // Send local max to root and determine global max.
   MPI_Reduce(&local_max, &global_max, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD);
 
   // Root announces global max.
   if (r == 0) {
-    std::cerr << "max = " << global_max << std::endl;
-    std::cerr << "_min = " << prng.min() << std::endl;
-    std::cerr << "_max = " << prng.max() << std::endl;
+    std::cout << "max = " << global_max << std::endl;
   }
 
   // Clean up.
   delete[] M;
   MPI_Finalize();
+
+  // Report execution time (wall-clock).
   time_point<system_clock, nanoseconds> tp_b = system_clock::now();
-  std::cout << (tp_b - tp_a).count() << std::endl;
+  std::cout << "t = " << (tp_b - tp_a).count() << std::endl;
   return 0;
 }

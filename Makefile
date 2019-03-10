@@ -4,7 +4,7 @@ REPORT_NAME=cosc6326-pa1-michael-yantosca
 INCS=-I/usr/include/openmpi
 LIBS=-lmpi
 MPICPP=mpic++
-CFLAGS=-g
+CFLAGS=-g -std=c++11
 
 all: $(REPORT_NAME).pdf nkmax
 
