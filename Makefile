@@ -6,11 +6,13 @@ LIBS=-lmpi
 MPICPP=mpic++
 CFLAGS=-g -std=c++11
 
-all: $(REPORT_NAME).pdf nkmax
+all: $(REPORT_NAME).pdf nkmax popldump
 
 nkmax: nkmax.o
 	@$(MPICPP) $(CFLAGS) $^ -o $@ $(LIBS)
 
+popldump: popldump.o
+	@$(MPICPP) $(CFLAGS) $^ -o $@ $(LIBS)
 
 %.o: %.cpp
 	@$(MPICPP) $(CFLAGS) $(INCS) -c $*.cpp
@@ -27,6 +29,7 @@ clean: clean-doc-$(REPORT_NAME)
 	@rm -f *~
 	@rm -f *.o
 	@rm -f nkmax
+	@rm -f popldump
 
 superclean-doc-%:
 	@rm -f $*.pdf
