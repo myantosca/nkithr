@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Send local max to root and determine global max.
-  MPI_Reduce(&local_max, &global_max, 1, MPI_LONG, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_max, &global_max, 1, MPI_UNSIGNED, MPI_MAX, 0, MPI_COMM_WORLD);
 
   // Root announces global max.
   if (r == 0) {
