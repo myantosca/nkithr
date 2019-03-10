@@ -9,10 +9,11 @@ CFLAGS=-g -std=c++11
 all: $(REPORT_NAME).pdf nkmax
 
 nkmax: nkmax.o
-	$(MPICPP) $(CFLAGS) $^ -o $@ $(LIBS)
+	@$(MPICPP) $(CFLAGS) $^ -o $@ $(LIBS)
+
 
 %.o: %.cpp
-	$(MPICPP) $(CFLAGS) $(INCS) -c $*.cpp
+	@$(MPICPP) $(CFLAGS) $(INCS) -c $*.cpp
 
 %.pdf: %.tex
 	@$(LATEX) -shell-escape $*.tex
@@ -28,7 +29,7 @@ clean: clean-doc-$(REPORT_NAME)
 	@rm -f nkmax
 
 superclean-doc-%:
-	rm -f $*.pdf
+	@rm -f $*.pdf
 
 clean-doc-%:
 	@rm -f $*.aux
