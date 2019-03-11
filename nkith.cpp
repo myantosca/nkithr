@@ -7,6 +7,12 @@
 
 using namespace std::chrono;
 
+int cmp(const void *pa, const void *pb) {
+  uint32_t *a = (uint32_t *)pa;
+  uint32_t *b = (uint32_t *)pb;
+  return (*a < *b) ? -1 : ((*a > *b) ? 1 : 0);
+}
+
 int main(int argc, char *argv[]) {
   int r, k;
   uint32_t a = 0, i, j, c, n, m;
@@ -61,17 +67,14 @@ int main(int argc, char *argv[]) {
   // Populate the local set of candidates.
   uint32_t *M = new uint32_t[m];
   memset(M, prng.min(), m * sizeof(uint32_t));
-  uint32_t local_max = prng.min();
-  uint32_t global_max = prng.min();
+
+  // Generate the local population.
   for (j = 0; j < m; j++) {
-    uint32_t v = prng();
-    c = 0;
-    while ((c < j) && (v >= M[c])) { c++; }
-    if (c < j) {
-      memmove(M + c + 1, M + c, (j - c) * sizeof(uint32_t));
-    }
-    M[c] = v;
+    M[j] = prng();
   }
+
+  // Pre-sort the local population for easier handling.
+  qsort(M, m, sizeof(uint32_t), cmp);
 
   // Dump local population for post-mortem debugging.
   MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &popl_fp);
