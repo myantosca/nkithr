@@ -6,9 +6,12 @@ LIBS=-lmpi
 MPICPP=mpic++
 CFLAGS=-g -std=c++11
 
-all: $(REPORT_NAME).pdf nkmax popldump
+all: $(REPORT_NAME).pdf nkmax popldump nkith
 
 nkmax: nkmax.o
+	@$(MPICPP) $(CFLAGS) $^ -o $@ $(LIBS)
+
+nkith: nkith.o
 	@$(MPICPP) $(CFLAGS) $^ -o $@ $(LIBS)
 
 popldump: popldump.o
