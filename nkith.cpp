@@ -65,14 +65,10 @@ int main(int argc, char *argv[]) {
   uint32_t global_max = prng.min();
   for (j = 0; j < m; j++) {
     uint32_t v = prng();
-    std::cerr << v << std::endl;
     c = 0;
     while ((c < j) && (v >= M[c])) { c++; }
     if (c < j) {
-      //memmove(M + (c + 1) * sizeof(uint32_t), M + c * sizeof(uint32_t), (j - c) * sizeof(uint32_t));
-      for (int d = j; d > c; d--) {
-	M[d] = M[d-1];
-      }
+      memmove(M + c + 1, M + c, (j - c) * sizeof(uint32_t));
     }
     M[c] = v;
   }
