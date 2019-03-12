@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
   uint32_t a = 0, i, j, c, n, m;
   uint32_t S1 = -1, lb, ub;
   uint32_t pivot, pivot_cand;
+  uint32_t msgs = 0;
+  uint32_t rnds = 1;
   MPI_File popl_fp;
   MPI_Offset popl_off = 0;
   MPI_Request popl_req;
@@ -90,6 +92,7 @@ int main(int argc, char *argv[]) {
     pivot_cand = M[lb + ((ub - lb) >> 1)];
     // Gather pivot candidates from all nodes.
     MPI_Gather(&pivot_cand, 1, MPI_UNSIGNED, pivot_cands, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    msgs += k - 1;
     // Root chooses pivot p from candidates in round-robin fashion (poor man's rando).
     if (r == 0) {
       pivot = pivot_cands[p];
@@ -97,12 +100,14 @@ int main(int argc, char *argv[]) {
     }
     // Broadcast pivot to all nodes.
     MPI_Bcast(&pivot, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    msgs += k - 1;
     // Set the lower bound for starting the search.
     c = lb;
     // Increment until the pivot is passed.
     while ((M[c] < pivot) && (c < ub)) { c++; }
     // Root sums all cardinalities sent and broadcasts the sum to all nodes.
     MPI_Allreduce(&c, &S1, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+    msgs += (k - 1) * 2;
     // If |S1| > i - 1 then search in the range [lb,c).
     if (S1 > i - 1) {
       ub = c;
@@ -111,10 +116,16 @@ int main(int argc, char *argv[]) {
     else if (S1 < i - 1) {
       lb = c;
     }
+    rnds++;
   }
   // Root announces ith member of population.
   if (r == 0) {
-    std::cout << i << "th = " << pivot << std::endl;
+    std::cout << "n = " << n << std::endl;
+    std::cout << "k = " << k << std::endl;
+    std::cout << "i = " << i << std::endl;
+    std::cout << "p = " << pivot << std::endl;
+    std::cout << "m = " << msgs << std::endl;
+    std::cout << "r = " << rnds << std::endl;
   }
 
   // Wait for population dump. Close dump file.

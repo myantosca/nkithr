@@ -10,6 +10,8 @@ using namespace std::chrono;
 int main(int argc, char *argv[]) {
   int r, k;
   uint32_t a, i, n, m;
+  uint32_t msgs = 0;
+  uint32_t rnds = 1;
   MPI_File popl_fp;
   MPI_Offset popl_off = 0;
   MPI_Request popl_req;
@@ -67,10 +69,14 @@ int main(int argc, char *argv[]) {
   MPI_File_iwrite_at(popl_fp, 0, M, m, MPI_UNSIGNED, &popl_req);
   // Send local max to root and determine global max.
   MPI_Reduce(&local_max, &global_max, 1, MPI_UNSIGNED, MPI_MAX, 0, MPI_COMM_WORLD);
-
+  msgs += k - 1;
   // Root announces global max.
   if (r == 0) {
-    std::cout << "max = " << global_max << std::endl;
+    std::cout << "n = " << n << std::endl;
+    std::cout << "k = " << k << std::endl;
+    std::cout << "u = " << global_max << std::endl;
+    std::cout << "m = " << msgs << std::endl;
+    std::cout << "r = " << rnds << std::endl;
   }
 
   // Wait for population dump. Close dump file.
