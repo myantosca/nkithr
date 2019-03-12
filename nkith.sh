@@ -5,7 +5,7 @@
 #SBATCH --ntasks-per-node 4
 
 export TS="$(date +%Y-%m-%d.%H.%M.%S)"
-export DOUT="./results/nkmax/${TS}"
+export DOUT="./results/nkith/${TS}"
 mkdir -p ${DOUT}
 
 for ((k = 1; k <= 32; k *= 2)); do
