@@ -1,6 +1,7 @@
+#include <iostream>
 #include <mpi.h>
 #include <sys/types.h>
-#include <string.h>
+#include <cstring>
 
 int main(int argc, char *argv[]) {
   int r, k;
