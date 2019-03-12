@@ -74,17 +74,22 @@ int main(int argc, char *argv[]) {
     MPI_File_set_view(popl_fp, popl_off, MPI_UNSIGNED, MPI_UNSIGNED, "native", MPI_INFO_NULL);
     MPI_File_iwrite_at(popl_fp, 0, M, m, MPI_UNSIGNED, &popl_req);
   }
-  
+
   // Send local max to root and determine global max.
   MPI_Reduce(&local_max, &global_max, 1, MPI_UNSIGNED, MPI_MAX, 0, MPI_COMM_WORLD);
   msgs += k - 1;
   // Root announces global max.
   if (r == 0) {
-    std::cout << "n = " << n << std::endl;
-    std::cout << "k = " << k << std::endl;
-    std::cout << "u = " << global_max << std::endl;
-    std::cout << "m = " << msgs << std::endl;
-    std::cout << "r = " << rnds << std::endl;
+    std::cout << "n,k,u,m,r";
+    for (i = 0; i < k; i++) {
+      std::cout << ",t" << i;
+    }
+    std::cout << std::endl;
+    std::cout << n << ",";
+    std::cout << k << ",";
+    std::cout << global_max << ",";
+    std::cout << msgs << ",";
+    std::cout << rnds << std::flush;
   }
 
   if (popldump) {
@@ -99,6 +104,6 @@ int main(int argc, char *argv[]) {
 
   // Report execution time (wall-clock).
   time_point<system_clock, nanoseconds> tp_b = system_clock::now();
-  std::cout << "t = " << (tp_b - tp_a).count() << std::endl;
+  std::cout << "," << (tp_b - tp_a).count();
   return 0;
 }

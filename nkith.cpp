@@ -127,12 +127,17 @@ int main(int argc, char *argv[]) {
   }
   // Root announces ith member of population.
   if (r == 0) {
-    std::cout << "n = " << n << std::endl;
-    std::cout << "k = " << k << std::endl;
-    std::cout << "i = " << i << std::endl;
-    std::cout << "p = " << pivot << std::endl;
-    std::cout << "m = " << msgs << std::endl;
-    std::cout << "r = " << rnds << std::endl;
+    std::cout << "n,k,i,p,m,r";
+    for (i = 0; i < k; i++) {
+      std::cout << ",t" << i;
+    }
+    std::cout << std::endl;
+    std::cout << n << ",";
+    std::cout << k << ",";
+    std::cout << i << ",";
+    std::cout << pivot << ",";
+    std::cout << msgs << ",";
+    std::cout << rnds << std::flush;
   }
 
   if (popldump) {
@@ -148,6 +153,6 @@ int main(int argc, char *argv[]) {
 
   // Report execution time (wall-clock).
   time_point<system_clock, nanoseconds> tp_b = system_clock::now();
-  std::cout << "t = " << (tp_b - tp_a).count() << std::endl;
+  std::cout << "," << (tp_b - tp_a).count();
   return 0;
 }
