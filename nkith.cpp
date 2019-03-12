@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
   MPI_Status popl_status;
   time_point<system_clock, nanoseconds> tp_a = system_clock::now();
   const char *fname = "popl.out";
+  bool popldump = false;
 
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &r);
@@ -49,6 +50,10 @@ int main(int argc, char *argv[]) {
     if (!strcmp("-f", argv[a])) {
       a++;
       if (a < argc) fname = argv[a];
+    }
+    // Debug argument (population dump).
+    if (!strcmp("-g", argv[a])) {
+      popldump = true;
     }
     a++;
   }
@@ -79,9 +84,11 @@ int main(int argc, char *argv[]) {
   qsort(M, m, sizeof(uint32_t), cmp);
 
   // Dump local population for post-mortem debugging.
-  MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &popl_fp);
-  MPI_File_set_view(popl_fp, popl_off, MPI_UNSIGNED, MPI_UNSIGNED, "native", MPI_INFO_NULL);
-  MPI_File_iwrite_at(popl_fp, 0, M, m, MPI_UNSIGNED, &popl_req);
+  if (popldump) {
+    MPI_File_open(MPI_COMM_WORLD, fname, MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &popl_fp);
+    MPI_File_set_view(popl_fp, popl_off, MPI_UNSIGNED, MPI_UNSIGNED, "native", MPI_INFO_NULL);
+    MPI_File_iwrite_at(popl_fp, 0, M, m, MPI_UNSIGNED, &popl_req);
+  }
 
   lb = 0;
   ub = m;
@@ -128,9 +135,11 @@ int main(int argc, char *argv[]) {
     std::cout << "r = " << rnds << std::endl;
   }
 
-  // Wait for population dump. Close dump file.
-  MPI_Wait(&popl_req, &popl_status);
-  MPI_File_close(&popl_fp);
+  if (popldump) {
+    // Wait for population dump. Close dump file.
+    MPI_Wait(&popl_req, &popl_status);
+    MPI_File_close(&popl_fp);
+  }
 
   // Clean up.
   delete[] M;
