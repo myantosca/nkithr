@@ -15,11 +15,13 @@ int cmp(const void *pa, const void *pb) {
 
 int main(int argc, char *argv[]) {
   int r, k;
-  uint32_t a = 0, i, j, c, n, m;
+  uint32_t a = 0, i, j, c, n, m, v;
   uint32_t S1 = -1, lb, ub;
   uint32_t pivot, pivot_cand;
   uint32_t msgs = 0;
   uint32_t rnds = 1;
+  uint32_t prior = 0;
+  uint32_t dups = 0;
   MPI_File popl_fp;
   MPI_Offset popl_off = 0;
   MPI_Request popl_req;
@@ -27,7 +29,7 @@ int main(int argc, char *argv[]) {
   time_point<system_clock, nanoseconds> tp_a = system_clock::now();
   const char *fname = "popl.out";
   bool popldump = false;
-
+  int genorder = 0;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &r);
   MPI_Comm_size(MPI_COMM_WORLD, &k);
@@ -55,15 +57,25 @@ int main(int argc, char *argv[]) {
     if (!strcmp("-g", argv[a])) {
       popldump = true;
     }
+    if (!strcmp("--123", argv[a])) {
+      genorder = 1;
+    }
+    if (!strcmp("--321", argv[a])) {
+      genorder = -1;
+    }
+    if (!strcmp("-d", argv[a])) {
+      a++;
+      if (a < argc) sscanf(argv[a], "%u", &dups);
+    }
     a++;
   }
 
   // Determine the local population, spreading the remainder evenly over the nodes.
   m = n / k + ((n % k) > r);
   for (j = 0; j < r; j++) {
-    popl_off += n / k + ((n % k) > j);
+    prior += n / k + ((n % k) > j);
   }
-  popl_off *= sizeof(uint32_t);
+  popl_off = prior * sizeof(uint32_t);
 
   // Create a seeded PNRG based on the standard Mersenne Twister engine.
   unsigned seed = system_clock::now().time_since_epoch().count();
@@ -76,8 +88,16 @@ int main(int argc, char *argv[]) {
   memset(M, prng.min(), m * sizeof(uint32_t));
 
   // Generate the local population.
-  for (j = 0; j < m; j++) {
-    M[j] = prng();
+  j = 0;
+  while (j < m) {
+    v = (genorder > 0) ? prior + j : ((genorder < 0) ? n - (prior + j + 1) : prng());
+    M[j] = v;
+    j++;
+    uint32_t d = dups;
+    while (d-- > 0) {
+      M[j] = v;
+      j++;
+    }
   }
 
   // Pre-sort the local population for easier handling.
