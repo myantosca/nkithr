@@ -15,8 +15,10 @@ int cmp(const void *pa, const void *pb) {
 
 int main(int argc, char *argv[]) {
   int r, k;
-  uint32_t a = 0, i, j, c, n, m, v;
-  uint32_t S1 = -1, lb, ub;
+  uint32_t a = 0, i, j, n, m, v, lb, ub;
+  uint32_t c, e;
+  uint32_t s[2] = {0, 0};
+  uint32_t S[2] = {0, 0};
   uint32_t pivot, pivot_cand;
   uint32_t msgs = 0;
   uint32_t rnds = 1;
@@ -115,8 +117,8 @@ int main(int argc, char *argv[]) {
   ub = m;
   // Round-robin pivot selection counter.
   uint32_t p = 0;
-  // If |S1| = i - 1 then done.
-  while (S1 != i - 1) {
+  // If |S1| < i <= |S1| + |P| then done.
+  while (!(S[0] < i && S[1] >= i)) {
     pivot_cand = M[lb + ((ub - lb) >> 1)];
     // Gather pivot candidates from all nodes.
     MPI_Gather(&pivot_cand, 1, MPI_UNSIGNED, pivot_cands, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
@@ -130,19 +132,21 @@ int main(int argc, char *argv[]) {
     MPI_Bcast(&pivot, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
     msgs += k - 1;
     // Set the lower bound for starting the search.
-    c = lb;
+    s[0] = lb;
     // Increment until the pivot is passed.
-    while ((M[c] < pivot) && (c < ub)) { c++; }
+    while ((M[s[0]] < pivot) && (s[0] < ub)) { s[0]++; }
+    s[1] = s[0];
+    while ((M[s[1]] == pivot) && (s[1] < ub)) { s[1]++; }
     // Root sums all cardinalities sent and broadcasts the sum to all nodes.
-    MPI_Allreduce(&c, &S1, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&s, &S, 2, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
     msgs += (k - 1) * 2;
-    // If |S1| > i - 1 then search in the range [lb,c).
-    if (S1 > i - 1) {
-      ub = c;
+    // If |S1| > i - 1 then search in the range [lb,s[0]), i.e., below the pivot.
+    if (S[0] > i - 1) {
+      ub = s[0];
     }
-    // If |S1| < i - 1 then search in the range (c,ub).
-    else if (S1 < i - 1) {
-      lb = c;
+    // If |S1| + |P| < i then search in the range (s[1],ub), i.e., above the pivot.
+    else if (S[1] < i) {
+      lb = s[1];
     }
     rnds++;
   }
