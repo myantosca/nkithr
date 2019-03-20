@@ -77,6 +77,10 @@ int main(int argc, char *argv[]) {
   }
   popl_off = prior * sizeof(uint32_t);
 
+  // Put bound on dups to avoid requiring communication for duplication of random elements.
+  if (genorder == 0) {
+    dups = dups < n / k ? dups : n / k - 1;
+  }
   // Create a seeded PNRG based on the standard Mersenne Twister engine.
   unsigned seed = system_clock::now().time_since_epoch().count();
   std::mt19937 prng(seed);
@@ -90,13 +94,10 @@ int main(int argc, char *argv[]) {
   // Generate the local population.
   j = 0;
   while (j < m) {
-    v = (genorder > 0) ? prior + j : ((genorder < 0) ? n - (prior + j + 1) : prng());
-    M[j] = v;
-    j++;
-    uint32_t d = dups;
-    while (d-- > 0) {
-      M[j] = v;
-      j++;
+    v = (genorder > 0) ? (prior + j) / (dups + 1) : ((genorder < 0) ? (n - (prior + j + 1)) / (dups + 1) : prng());
+    M[j++] = v;
+    if (genorder == 0) {
+      for (uint32_t d = 0; d < dups; d++) { M[j++] = v; }
     }
   }
 
