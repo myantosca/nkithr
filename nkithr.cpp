@@ -157,6 +157,10 @@ int main(int argc, char *argv[]) {
     for (c = s[0]; c < s[1]; c++) {
       Q[c] = pivot;
     }
+
+    // Copy back rearranged population subspace.
+    if (lb < ub) memcpy(M + lb, Q + lb, (ub - lb) * sizeof(uint32_t));
+
     // Root sums all cardinalities sent and broadcasts the sum to all nodes.
     MPI_Allreduce(&s, &S, 3, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
     msgs += (k - 1) * 2;
@@ -169,7 +173,6 @@ int main(int argc, char *argv[]) {
       lb = s[1];
     }
 
-    memcpy(M, Q, m * sizeof(uint32_t));
     rnds++;
   }
   // Root announces ith member of population.
