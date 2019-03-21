@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
   const char *fname = "popl.out";
   bool popldump = false;
   int genorder = 0;
+  bool deterministic = false;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &r);
   MPI_Comm_size(MPI_COMM_WORLD, &k);
@@ -69,6 +70,9 @@ int main(int argc, char *argv[]) {
     if (!strcmp("-d", argv[a])) {
       a++;
       if (a < argc) sscanf(argv[a], "%u", &dups);
+    }
+    if (!strcmp("-D", argv[a])) {
+      deterministic = true;
     }
     a++;
   }
@@ -119,37 +123,53 @@ int main(int argc, char *argv[]) {
   lb = 0;
   ub = m;
 
+  uint32_t p = 0;
   // Pivot selection PRNGs.
   std::default_random_engine pivot_cand_gen (seed);
   std::default_random_engine pivot_gen (seed);
   // If |S1| < i <= |S1| + |P| then done.
   while (!(S[0] < i && S[1] >= i)) {
     std::uniform_int_distribution<uint32_t> pivot_cand_select(lb, ub - 1);
-    pivot_cand = (lb < ub) ? M[pivot_cand_select(pivot_cand_gen)] : M[lb];
+    // Deterministic case: Take the middle element of the unsorted live population.
+    // Random case: Select from a uniform distribution over the unsorted live population. Choose lower bound if no live population.
+    // The fallback is safe since it will not change the overall set cardinalities.
+    // It has either already served as a pivot or is out of range for pivoting.
+    // The only cost is a wasted round.
+    pivot_cand = deterministic ? M[lb + ((ub - lb) >> 1)] : (lb < ub) ? M[pivot_cand_select(pivot_cand_gen)] : M[lb];
     pivot_weight = ub - lb;
-    // Gather pivot candidates from all nodes.
-    MPI_Gather(&pivot_cand, 1, MPI_UNSIGNED, pivot_cands, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
     // Gather pivot candidate weights from all nodes.
     MPI_Gather(&pivot_weight, 1, MPI_DOUBLE, pivot_weights, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    msgs += 2 * (k - 1);
+    msgs += k - 1;
+
+    // Gather pivot candidates from all nodes.
+    MPI_Gather(&pivot_cand, 1, MPI_UNSIGNED, pivot_cands, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    msgs += k - 1;
+
     // Root chooses pivot p from candidates according to weighted discrete distribution over [0,k).
     if (r == 0) {
-      // No reason to waste messages since k should be small relative to n.
-      // The sum of weights is computed at the root.
-      double pivot_weight_total = 0;
-      for (j = 0; j < k; j++) {
-	pivot_weight_total += pivot_weights[j];
+      if (deterministic) {
+	// Round-robin selection of live pivots (poor man's uniform distribution).
+	while (pivot_weights[p] == 0) { p = (p + 1) % k; }
+	pivot = pivot_cands[p];
       }
-      // To make use of std::discrete_distribution, we have to copy the array to something iterable.
-      // The division by live population total is done here also.
-      std::vector<double> pivot_weights_vec;
-      for (j = 0; j < k; j++) {
-	pivot_weights_vec.push_back(pivot_weights[j] / pivot_weight_total);
+      else {
+	// No reason to waste messages since k should be small relative to n.
+	// The sum of weights is computed at the root.
+	double pivot_weight_total = 0;
+	for (j = 0; j < k; j++) {
+	  pivot_weight_total += pivot_weights[j];
+	}
+	// To make use of std::discrete_distribution, we have to copy the array to something iterable.
+	// The division by live population total is done here also.
+	std::vector<double> pivot_weights_vec;
+	for (j = 0; j < k; j++) {
+	  pivot_weights_vec.push_back(pivot_weights[j] / pivot_weight_total);
+	}
+	// Create the round pivot selection distribution.
+	std::discrete_distribution<uint32_t> pivot_select(pivot_weights_vec.begin(), pivot_weights_vec.end());
+	// Select the pivot.
+	pivot = pivot_cands[pivot_select(pivot_gen)];
       }
-      // Create the round pivot selection distribution.
-      std::discrete_distribution<uint32_t> pivot_select(pivot_weights_vec.begin(), pivot_weights_vec.end());
-      // Select the pivot.
-      pivot = pivot_cands[pivot_select(pivot_gen)];
     }
     // Broadcast pivot to all nodes.
     MPI_Bcast(&pivot, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
