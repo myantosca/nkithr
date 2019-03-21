@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
   uint32_t s[3] = {0, 0, 0};
   uint32_t S[3] = {0, 0, 0};
   uint32_t pivot, pivot_cand;
+  double pivot_weight;
   uint32_t msgs = 0;
   uint32_t rnds = 1;
   uint32_t prior = 0;
@@ -88,6 +89,7 @@ int main(int argc, char *argv[]) {
   std::mt19937 prng(seed);
 
   uint32_t *pivot_cands = new uint32_t[k];
+  double *pivot_weights = new double[k];
   memset(pivot_cands, prng.min(), k * sizeof(uint32_t));
   // Populate the local set of candidates.
   uint32_t *M = new uint32_t[m];
@@ -116,30 +118,51 @@ int main(int argc, char *argv[]) {
 
   lb = 0;
   ub = m;
-  // Round-robin pivot selection counter.
-  uint32_t p = 0;
-  std::uniform_int_distribution<int> pivot_select(0, k - 1);
+
+  // Pivot selection PRNGs.
   std::default_random_engine pivot_cand_gen (seed);
   std::default_random_engine pivot_gen (seed);
   // If |S1| < i <= |S1| + |P| then done.
   while (!(S[0] < i && S[1] >= i)) {
     std::uniform_int_distribution<uint32_t> pivot_cand_select(lb, ub - 1);
     pivot_cand = (lb < ub) ? M[pivot_cand_select(pivot_cand_gen)] : M[lb];
+    pivot_weight = ub - lb;
     // Gather pivot candidates from all nodes.
     MPI_Gather(&pivot_cand, 1, MPI_UNSIGNED, pivot_cands, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-    msgs += k - 1;
-    // Root chooses pivot p from candidates in round-robin fashion (poor man's rando).
-    if (r == 0) { pivot = pivot_cands[pivot_select(pivot_gen)]; }
-
+    // Gather pivot candidate weights from all nodes.
+    MPI_Gather(&pivot_weight, 1, MPI_DOUBLE, pivot_weights, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    msgs += 2 * (k - 1);
+    // Root chooses pivot p from candidates according to weighted discrete distribution over [0,k).
+    if (r == 0) {
+      // No reason to waste messages since k should be small relative to n.
+      // The sum of weights is computed at the root.
+      double pivot_weight_total = 0;
+      for (j = 0; j < k; j++) {
+	pivot_weight_total += pivot_weights[j];
+      }
+      // To make use of std::discrete_distribution, we have to copy the array to something iterable.
+      // The division by live population total is done here also.
+      std::vector<double> pivot_weights_vec;
+      for (j = 0; j < k; j++) {
+	pivot_weights_vec.push_back(pivot_weights[j] / pivot_weight_total);
+      }
+      // Create the round pivot selection distribution.
+      std::discrete_distribution<uint32_t> pivot_select(pivot_weights_vec.begin(), pivot_weights_vec.end());
+      // Select the pivot.
+      pivot = pivot_cands[pivot_select(pivot_gen)];
+    }
     // Broadcast pivot to all nodes.
     MPI_Bcast(&pivot, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
     msgs += k - 1;
 
+    // Initialize the set cardinality index variables.
     s[0] = lb;
     s[1] = 0;
     s[2] = ub;
+
     // Set the lower bound for starting the search.
     uint32_t c = lb;
+
     // Increment until remaining search space is exhausted.
     while (c < ub) {
       if (M[c] < pivot) {
@@ -153,7 +176,11 @@ int main(int argc, char *argv[]) {
       }
       c++;
     }
+
+    // s[1] = |S1| + |P|
     s[1] += s[0];
+
+    // Fill in P.
     for (c = s[0]; c < s[1]; c++) {
       Q[c] = pivot;
     }
@@ -194,6 +221,7 @@ int main(int argc, char *argv[]) {
   delete[] M;
   delete[] Q;
   delete[] pivot_cands;
+  delete[] pivot_weights;
   MPI_Finalize();
 
   // Report execution time (wall-clock).
