@@ -126,8 +126,8 @@ int main(int argc, char *argv[]) {
 
   uint32_t p = 0;
   // Pivot selection PRNGs.
-  std::default_random_engine pivot_cand_gen (seed);
-  std::default_random_engine pivot_gen (seed);
+  std::knuth_b pivot_cand_gen (seed);
+  std::knuth_b pivot_gen (seed);
 
   time_point<system_clock, nanoseconds> tp_x = system_clock::now();
   // If |S1| < i <= |S1| + |P| then done.
