@@ -29,7 +29,6 @@ int main(int argc, char *argv[]) {
   MPI_Offset popl_off = 0;
   MPI_Request popl_req;
   MPI_Status popl_status;
-  time_point<system_clock, nanoseconds> tp_a = system_clock::now();
   const char *fname = "popl.out";
   bool popldump = false;
   int genorder = 0;
@@ -37,6 +36,8 @@ int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &r);
   MPI_Comm_size(MPI_COMM_WORLD, &k);
+
+  time_point<system_clock, nanoseconds> tp_a = system_clock::now();
 
   // Default global population.
   n = k * 256;
@@ -127,6 +128,8 @@ int main(int argc, char *argv[]) {
   // Pivot selection PRNGs.
   std::default_random_engine pivot_cand_gen (seed);
   std::default_random_engine pivot_gen (seed);
+
+  time_point<system_clock, nanoseconds> tp_x = system_clock::now();
   // If |S1| < i <= |S1| + |P| then done.
   while (!(S[0] < i && S[1] >= i)) {
     std::uniform_int_distribution<uint32_t> pivot_cand_select(lb, ub - 1);
@@ -222,30 +225,32 @@ int main(int argc, char *argv[]) {
 
     rnds++;
   }
+
+  delete[] M;
+  delete[] Q;
+  delete[] pivot_cands;
+  delete[] pivot_weights;
+
+  time_point<system_clock, nanoseconds> tp_y = system_clock::now();
+  int64_t T[2] = { (tp_y - tp_x).count(), (tp_y - tp_a).count() };
+  int64_t T0[2] = { 0, 0 };
+  MPI_Reduce(&T, &T0, 2, MPI_UNSIGNED_LONG, MPI_MAX, 0, MPI_COMM_WORLD);
   // Root announces ith member of population.
   if (r == 0) {
-    std::cout << "n,k,i,p,m,r";
-    for (i = 0; i < k; i++) {
-      std::cout << ",t" << i;
-    }
+    std::cout << "n,k,i,p,m,r,t,T";
     std::cout << std::endl;
     std::cout << n << ",";
     std::cout << k << ",";
     std::cout << i << ",";
     std::cout << pivot << ",";
     std::cout << msgs << ",";
-    std::cout << rnds << std::flush;
+    std::cout << rnds << ",";
+    std::cout << T0[0] << ",";
+    std::cout << T0[1] << std::endl;
   }
 
   // Clean up.
-  delete[] M;
-  delete[] Q;
-  delete[] pivot_cands;
-  delete[] pivot_weights;
   MPI_Finalize();
 
-  // Report execution time (wall-clock).
-  time_point<system_clock, nanoseconds> tp_b = system_clock::now();
-  std::cout << "," << (tp_b - tp_a).count();
   return 0;
 }
