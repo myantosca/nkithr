@@ -7,12 +7,6 @@
 
 using namespace std::chrono;
 
-int cmp(const void *pa, const void *pb) {
-  uint32_t *a = (uint32_t *)pa;
-  uint32_t *b = (uint32_t *)pb;
-  return (*a < *b) ? -1 : ((*a > *b) ? 1 : 0);
-}
-
 int main(int argc, char *argv[]) {
   int r, k;
   uint32_t a = 0, i, j, n, m, v, lb, ub;
