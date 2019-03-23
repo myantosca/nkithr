@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
       a++;
       if (a < argc) sscanf(argv[a], "%u", &n);
     }
-    // Input filename argument.
-    if (!strcmp("-i", argv[a])) {
+    // Population dump filename argument.
+    if (!strcmp("-f", argv[a])) {
       a++;
       if (a < argc) fname = argv[a];
     }

@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
       a++;
       if (a < argc) sscanf(argv[a], "%u", &i);
     }
-    // Input filename argument.
+    // Population dump filename argument.
     if (!strcmp("-f", argv[a])) {
       a++;
       if (a < argc) fname = argv[a];

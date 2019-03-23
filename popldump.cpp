@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 	if (a < argc) sscanf(argv[a], "%u", &n);
       }
       // Input filename argument.
-      if (!strcmp("-i", argv[a])) {
+      if (!strcmp("-f", argv[a])) {
 	a++;
 	if (a < argc) fname = argv[a];
       }
