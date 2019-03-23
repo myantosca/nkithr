@@ -87,7 +87,7 @@
         \footnotesize
         \begin{groupplot}[
             group style={
-              group size=3 by 5,
+              group size=4 by 5,
               xlabels at=edge bottom,
               ylabels at=edge left
             },
@@ -105,22 +105,27 @@
           \nextgroupplot[group/empty plot]
           \linregplots{\footnotesize Total Time}{./results/nkith/nkith}{.max}{n}{t}
           \linregplots{\footnotesize Messages}{./results/nkith/nkith}{.max}{n}{m}
+          \linregplots{\footnotesize Rounds}{./results/nkith/nkith}{.max}{n}{r}
           % nkithr (Knuth-B)
           \linregplots{\footnotesize Exchange Time}{./results/nkithr-knuthb/nkithr}{.max}{n}{t}
           \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{T}
           \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{m}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{r}
           % nkithr (Standard)
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{t}
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{T}
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{m}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{r}
           % nkithr -D
           \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{t}
           \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{T}
           \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{m}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{r}
           % nkmax
           \nextgroupplot[group/empty plot]
           \linregplots{}{./results/nkmax/nkmax}{}{n}{t}
           \linregplots{}{./results/nkmax/nkmax}{}{n}{m}
+          \linregplots{}{./results/nkmax/nkmax}{}{n}{r}
         \end{groupplot}
         \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
       \end{tikzpicture}
@@ -135,7 +140,7 @@
         \footnotesize
         \begin{groupplot}[
             group style={
-              group size=3 by 4,
+              group size=4 by 4,
               xlabels at=edge bottom,
               ylabels at=edge left
             },
@@ -153,18 +158,22 @@
           \nextgroupplot[group/empty plot]
           \linregplots{Total Time}{./results/nkith/nkith}{.min}{n}{t}
           \linregplots{Messages}{./results/nkith/nkith}{.min}{n}{m}
+          \linregplots{Rounds}{./results/nkith/nkith}{.min}{n}{r}
           % nkithr (Knuth-B)
           \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.min}{n}{t}
           \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{T}
           \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{m}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{r}
           % nkithr (Standard)
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{t}
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{T}
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{m}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{r}
           % nkithr -D
           \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{t}
           \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{T}
           \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{m}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{r}
         \end{groupplot}
         \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
       \end{tikzpicture}
@@ -179,7 +188,7 @@
         \footnotesize
         \begin{groupplot}[
             group style={
-              group size=3 by 4,
+              group size=4 by 4,
               xlabels at=edge bottom,
               ylabels at=edge left
             },
@@ -197,18 +206,22 @@
           \nextgroupplot[group/empty plot]
           \linregplots{Total Time}{./results/nkith/nkith}{.med}{n}{t}
           \linregplots{Messages}{./results/nkith/nkith}{.med}{n}{m}
+          \linregplots{Rounds}{./results/nkith/nkith}{.med}{n}{r}
           % nkithr (Knuth-B)
           \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.med}{n}{t}
           \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{T}
           \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{m}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{r}
           % nkithr (Standard)
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{t}
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{T}
           \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{m}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{r}
           % nkithr -D
           \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{t}
           \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{T}
           \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{m}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{r}
         \end{groupplot}
         \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
       \end{tikzpicture}
