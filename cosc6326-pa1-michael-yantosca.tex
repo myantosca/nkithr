@@ -14,11 +14,31 @@
 \usepackage[utf8]{luainputenc}
 \usepackage[bibencoding=utf8,backend=biber]{biblatex}
 \addbibresource{cosc6326-pa1-michael-yantosca.bib}
-
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \lhead{{\footnotesize{COSC6326 PA 1}}}
 \rhead{{\footnotesize{Michael Yantosca}}}
+
+\usepackage{longtable}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepgfplotslibrary{external}
+\usepgfplotslibrary{statistics}
+\usepgfplotslibrary{groupplots}
+\usetikzlibrary{pgfplots.groupplots, external}
+\tikzexternalize[]
+\pgfplotsset{
+  tick label style={font=\footnotesize},
+  label style={font=\small},
+  legend style={font=\small},
+  compat=newest
+}
+\pgfplotstableset{
+  col sep=comma,
+  begin table=\begin{longtable},
+  end table=\end{longtable},
+  every head row/.append style={after row=\endhead}
+}
 
 \newtheorem{fact}{Fact}
 \newtheorem{theorem}{Theorem}
@@ -36,12 +56,168 @@
 
 \newcommand{\TODO}[0]{\textbf{\color{red}{TODO}}}
 
+% \linregplots{title}{prefix}{suffix}{x}{y}
+\newcommand{\linregplots}[5]{
+  \nextgroupplot[title=#1]
+  \addplot [red, only marks, mark size=0.5] table [x=#4, y=#5] {#2.k1#3.log};
+  \addplot [red, no markers] table [x=#4,y={create col/linear regression={y=#5}}] {#2.k1#3.log};
+  \addplot [blue, only marks, mark size=0.5] table [x=#4, y=#5] {#2.k2#3.log};
+  \addplot [blue, no markers] table [x=#4,y={create col/linear regression={y=#5}}] {#2.k2#3.log};
+  \addplot [green, only marks, mark size=0.5] table [x=#4, y=#5] {#2.k4#3.log};
+  \addplot [green, no markers] table [x=#4,y={create col/linear regression={y=#5}}] {#2.k4#3.log};
+  \addplot [orange, only marks, mark size=0.5] table [x=#4, y=#5] {#2.k8#3.log};
+  \addplot [orange, no markers] table [x=#4,y={create col/linear regression={y=#5}}] {#2.k8#3.log};
+  \addplot [purple, only marks, mark size=0.5] table [x=#4, y=#5] {#2.k16#3.log};
+  \addplot [purple, no markers] table [x=#4,y={create col/linear regression={y=#5}}] {#2.k16#3.log};
+  \addplot [brown, only marks, mark size=0.5] table [x=#4, y=#5] {#2.k32#3.log};
+  \addplot [brown, no markers] table [x=#4,y={create col/linear regression={y=#5}}] {#2.k32#3.log};
+}
+
 \date{}
 \title{COSC6326 Programming Assignment 1}
 \author{Michael Yantosca}
 \begin{document}
 \maketitle
 \tableofcontents
+
+\section{Results}{
+  \paragraph{}{
+    \begin{figure}
+      \begin{tikzpicture}
+        \footnotesize
+        \begin{groupplot}[
+            group style={
+              group size=3 by 5,
+              xlabels at=edge bottom,
+              ylabels at=edge left
+            },
+            height=1.75in,
+            width=1.75in,
+            xlabel=$n$,
+            ylabel=$t$ (ns),
+            tick label style={font=\tiny},
+            label style={font=\tiny},
+            legend style={font=\tiny},
+            legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
+            legend to name=nprocs
+          ]
+          % nkith
+          \nextgroupplot[group/empty plot]
+          \linregplots{\footnotesize Total Time}{./results/nkith/nkith}{.max}{n}{t}
+          \linregplots{\footnotesize Messages}{./results/nkith/nkith}{.max}{n}{m}
+          % nkithr (Knuth-B)
+          \linregplots{\footnotesize Exchange Time}{./results/nkithr-knuthb/nkithr}{.max}{n}{t}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{T}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{m}
+          % nkithr (Standard)
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{t}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{T}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{m}
+          % nkithr -D
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{t}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{T}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{m}
+          % nkmax
+          \nextgroupplot[group/empty plot]
+          \linregplots{}{./results/nkmax/nkmax}{}{n}{t}
+          \linregplots{}{./results/nkmax/nkmax}{}{n}{m}
+        \end{groupplot}
+        \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+      \end{tikzpicture}
+      \caption{Empirical Complexity of Finding the Max}
+      \label{fig:maxcplx}
+    \end{figure}
+  }
+
+  \paragraph{}{
+    \begin{figure}
+      \begin{tikzpicture}
+        \footnotesize
+        \begin{groupplot}[
+            group style={
+              group size=3 by 4,
+              xlabels at=edge bottom,
+              ylabels at=edge left
+            },
+            height=1.75in,
+            width=1.75in,
+            xlabel=$n$,
+            ylabel=$t$ (ns),
+            tick label style={font=\tiny},
+            label style={font=\tiny},
+            legend style={font=\tiny},
+            legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
+            legend to name=nprocs
+          ]
+          % nkith
+          \nextgroupplot[group/empty plot]
+          \linregplots{Total Time}{./results/nkith/nkith}{.min}{n}{t}
+          \linregplots{Messages}{./results/nkith/nkith}{.min}{n}{m}
+          % nkithr (Knuth-B)
+          \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.min}{n}{t}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{T}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{m}
+          % nkithr (Standard)
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{t}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{T}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{m}
+          % nkithr -D
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{t}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{T}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{m}
+        \end{groupplot}
+        \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+      \end{tikzpicture}
+      \caption{Empirical Complexity of Finding the Min}
+      \label{fig:mincplx}
+    \end{figure}
+  }
+
+  \paragraph{}{
+    \begin{figure}
+      \begin{tikzpicture}
+        \footnotesize
+        \begin{groupplot}[
+            group style={
+              group size=3 by 4,
+              xlabels at=edge bottom,
+              ylabels at=edge left
+            },
+            height=1.75in,
+            width=1.75in,
+            xlabel=$n$,
+            ylabel=$t$ (ns),
+            tick label style={font=\tiny},
+            label style={font=\tiny},
+            legend style={font=\tiny},
+            legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
+            legend to name=nprocs
+          ]
+          % nkith
+          \nextgroupplot[group/empty plot]
+          \linregplots{Total Time}{./results/nkith/nkith}{.med}{n}{t}
+          \linregplots{Messages}{./results/nkith/nkith}{.med}{n}{m}
+          % nkithr (Knuth-B)
+          \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.med}{n}{t}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{T}
+          \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{m}
+          % nkithr (Standard)
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{t}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{T}
+          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{m}
+          % nkithr -D
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{t}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{T}
+          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{m}
+        \end{groupplot}
+        \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+      \end{tikzpicture}
+      \caption{Empirical Complexity of Finding the Median}
+      \label{fig:mediancplx}
+    \end{figure}
+  }
+
+}
 
 \printbibliography
 \end{document}
