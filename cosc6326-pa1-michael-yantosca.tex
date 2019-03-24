@@ -86,11 +86,166 @@
 
 \section{Analysis}{
   \subsection{\texttt{nkith}}{
-
+    \paragraph{}{
+      \begin{algorithm}
+        \footnotesize
+        \caption{\textsc{MP-Ith-Select}, Distributed Algorithm for Selecting the \emph{i}th Element of \emph{n} Numbers}
+        \begin{algorithmic}
+          \REQUIRE{$G$, a PRNG}
+          \REQUIRE{$n$, global population size}
+          \REQUIRE{$r$, node rank}
+          \REQUIRE{$k$, number of nodes}
+          \REQUIRE{
+            \[
+              m \gets n \div k +
+              \begin{cases}
+                1, & \text{ if } n \text{ mod } k > r \\
+                0, & \text{otherwise}
+              \end{cases},
+              \text{ local population size}
+            \]
+          }
+          \REQUIRE{$p \gets 0$, round-robin pivot selection counter}
+          \REQUIRE{$b_l \gets 0$, live local population lower bound}
+          \REQUIRE{$b_u \gets m$, live local population upper bound}
+          \REQUIRE{$|S_{1,r}| \gets 0$, local cardinality counter for elements below the pivot}
+          \REQUIRE{$|P_r| \gets 0$, local cardinality counter for elements less than or equal to the pivot}
+          \REQUIRE{$|S_1| \gets 0$, global cardinality counter for elements below the pivot}
+          \REQUIRE{$|P| \gets 0$, global cardinality counter for elements less than or equal to the pivot}
+          \STATE{Seed $G$ with the current epoch time.}
+          \FOR{$j = 0 \text{ to } m - 1$}{
+            \STATE{$M[j] = \textsc{Generate}(G)$}
+          }\ENDFOR
+          \STATE{\textsc{Qsort}($M$)}
+          \WHILE{\neg ($|S_1| < i$ and $|S_1| + |P| \geq i$)}{
+            \STATE{$c_r \gets M[b_l + (b_u - b_l) / 2]$}
+            \STATE{All nodes send $c_r$ to the root node.}
+            \IF{$r = 0$}{
+              \STATE{$c = c_p$}
+              \STATE{$p = (p + 1) \text{ mod } k$}
+              \STATE{Broadcast $c$ to all nodes.}
+            }\ENDIF
+            \STATE{$|S_{1,r}| \gets b_l$}
+            \WHILE{$M[|S_{1,r}|] < c$ and $|S_1| < b_u$}{
+              \STATE{$|S_{1,r}| = |S_{1,r}| + 1$}
+            }\ENDWHILE
+            \STATE{$|P_r| \gets |S_{1,r}|$}
+            \WHILE{$M[|P_r|] == c$ and $|P_r| < b_u$}{
+              \STATE{$|P_r| = |P_r| + 1$}
+            }\ENDWHILE
+            \STATE{All nodes send $|S_{1,r}|$ and $|P_r|$ to the root node.}
+            \IF{$r = 0$}{
+              \STATE{$|S_1| \gets \sum_{r = 0}^{k-1} |S_{1,r}|$}
+              \STATE{$|P| \gets \sum_{r = 0}^{k-1} |P_r|$}
+              \STATE{Broadcast $|S_1|$ and $|P|$ to all nodes.}
+            }\ENDIF
+            \IF{$|S_1| > i - 1$}{
+              \STATE{$b_u \gets |S_{1,r}|$}
+            }\ELSIF{$|P| < i$}{
+              \STATE{$b_l \gets |P_r|$}
+            }\ENDIF
+          }\ENDWHILE
+          \STATE{The root node announces $c$ as the $i$th element.}
+        \end{algorithmic}
+        \label{alg:nkith}
+      \end{algorithm}
+    }
   }
+
   \subsection{\texttt{nkithr}}{
+    \paragraph{}{
+      \begin{algorithm}
+        \footnotesize
+        \caption{\textsc{Random-Pivot-Select}, Distributed Algorithm for Selecting a Pivot Candidate}
+        \begin{algorithmic}
+          \REQUIRE{$k$, number of nodes}
+          \REQUIRE{$b_l$, live local population lower bound}
+          \REQUIRE{$b_u$, live local population upper bound}
+          \STATE{$G_{cand} \gets$ uniform distribution over $[b_l, b_u)$}
+          \STATE{$c_r \gets M[\textsc{Generate}(G_{cand})]$}
+          \STATE{$w_r \gets b_u - b_l$}
+          \STATE{All nodes send $c_r$ and $w_r$ to the root node.}
+          \IF{$r = 0$}{
+            \STATE{$w \gets \sum_{r=0}^{k-1} w_r$}
+            \STATE{$G_{pivot} \gets$ distribution over $[0,k)$ weighted by $w_r/w$.}
+            \STATE{$p = \textsc{Generate}(G_{pivot})$}
+            \STATE{$c = c_p$}
+            \STATE{Broadcast $c$ to all nodes.}
+          }\ENDIF
+        \end{algorithmic}
+        \label{alg:random-pivot-select}
+      \end{algorithm}
+    }
 
-  }
+    \paragraph{}{
+      \begin{algorithm}
+        \footnotesize
+        \caption{\textsc{MP-Ith-Select-Revised}, Distributed Algorithm for Selecting the \emph{i}th Element of \emph{n} Numbers}
+        \begin{algorithmic}
+          \REQUIRE{$G_{popl}$, a population PRNG}
+          \REQUIRE{$n$, global population size}
+          \REQUIRE{$r$, node rank}
+          \REQUIRE{$k$, number of nodes}
+          \REQUIRE{
+            \[
+              m \gets n \div k +
+              \begin{cases}
+                1, & \text{ if } n \text{ mod } k > r \\
+                0, & \text{otherwise}
+              \end{cases},
+              \text{ local population size}
+            \]
+          }
+          \REQUIRE{$b_l \gets 0$, live local population lower bound}
+          \REQUIRE{$b_u \gets m$, live local population upper bound}
+          \REQUIRE{$|S_1| \gets 0$, global cardinality for elements below the pivot}
+          \REQUIRE{$|P| \gets 0$, global cardinality for elements less than or equal to the pivot}
+          \STATE{Seed $G_{popl}$ with the current epoch time.}
+          \FOR{$j = 0 \text{ to } m - 1$}{
+            \STATE{$M[j] = \textsc{Generate}(G_{popl})$}
+          }\ENDFOR
+          \WHILE{\neg ($|S_1| < i$ and $|S_1| + |P| \geq i$)}{
+            \STATE{$\textsc{Random-Pivot-Select}(b_l, b_u)$}
+            \STATE{$s_1 \gets b_l$}
+            \STATE{$s_p \gets 0$}
+            \STATE{$s_2 \gets b_u$}
+            \STATE{$j \gets b_l$}
+            \FOR{$j = b_l \text{ to } b_u - 1$}{
+              \IF{$M[j] < c$}{
+                \STATE{$Q[s_1] \gets M[j]$}
+                \STATE{$s_1 = s_1 + 1$}
+              }\ELSIF{$M[j] > c$}{
+                \STATE{$s_2 = s_2 -1$}
+                \STATE{$Q[s_2] \gets M[j]$}
+              }\ELSE{
+                \STATE{$s_p \gets s_p + 1$}
+              }\ENDIF
+            }\ENDFOR
+            \STATE{$s_p \gets s_p + s_1$}
+            \FOR{$j = s_1 \text{ to } s_p$}{
+              \STATE{$Q[j] \gets c$}
+            }\ENDFOR
+            \IF{$b_l < b_u$}{
+              \STATE{Copy $Q[b_l, b_u)$ to $M[b_l, b_u)$.}
+            }\ENDIF
+            \STATE{All nodes send $s_1$ and $s_p$ to the root node.}
+            \IF{$r = 0$}{
+              \STATE{$|S_1| \gets \sum_{r = 0}^{k-1} s_{1,r}$}
+              \STATE{$|P| \gets \sum_{r = 0}^{k-1} s_{p,r}$}
+              \STATE{Broadcast $|S_1|$ and $|P|$ to all nodes.}
+            }\ENDIF
+            \IF{$|S_1| > i - 1$}{
+              \STATE{$b_u \gets s_1$}
+            }\ELSIF{$|P| < i$}{
+              \STATE{$b_l \gets s_p$}
+            }\ENDIF
+          }\ENDWHILE
+          \STATE{The root node announces $c$ as the $i$th element.}
+        \end{algorithmic}
+        \label{alg:nkithr}
+      \end{algorithm}
+     }
+   }
 }
 
 \section{Results}{
