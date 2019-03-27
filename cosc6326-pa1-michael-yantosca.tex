@@ -448,10 +448,11 @@
               group style={
                 group size=4 by 5,
                 xlabels at=edge bottom,
-                ylabels at=edge left
+                ylabels at=edge left,
+                vertical sep=0.5in
               },
-              height=1.75in,
-              width=1.75in,
+              height=1.5in,
+              width=1.5in,
               xlabel=$n$,
               ylabel=$t$ (ns),
               tick label style={font=\tiny},
@@ -487,6 +488,11 @@
             \linregplots{}{./results/nkmax/nkmax}{}{n}{r}
           \end{groupplot}
           \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+          \node[anchor=south] at ($(group c2r1.north east)!0.5!(group c3r1.north west)$){\texttt{nkith}};
+          \node[anchor=south] at ($(group c2r2.north east)!0.5!(group c3r2.north west)$){\texttt{nkithr} (Knuth-B)};
+          \node[anchor=south] at ($(group c2r3.north east)!0.5!(group c3r3.north west)$){\texttt{nkithr} (Default)};
+          \node[anchor=south] at ($(group c2r4.north east)!0.5!(group c3r4.north west)$){\texttt{nkithr} (Deterministic)};
+          \node[anchor=south] at ($(group c2r5.north east)!0.5!(group c3r5.north west)$){\texttt{nkmax}};
         \end{tikzpicture}
         \caption{Empirical Complexity of Finding the Maximum}
         \label{fig:maxcplx}
@@ -527,10 +533,11 @@
               group style={
                 group size=4 by 4,
                 xlabels at=edge bottom,
-                ylabels at=edge left
+                ylabels at=edge left,
+                vertical sep=0.5in
               },
-              height=1.75in,
-              width=1.75in,
+              height=1.5in,
+              width=1.5in,
               xlabel=$n$,
               ylabel=$t$ (ns),
               tick label style={font=\tiny},
@@ -561,6 +568,10 @@
             \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{r}
           \end{groupplot}
           \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+          \node[anchor=south] at ($(group c2r1.north east)!0.5!(group c3r1.north west)$){\texttt{nkith}};
+          \node[anchor=south] at ($(group c2r2.north east)!0.5!(group c3r2.north west)$){\texttt{nkithr} (Knuth-B)};
+          \node[anchor=south] at ($(group c2r3.north east)!0.5!(group c3r3.north west)$){\texttt{nkithr} (Default)};
+          \node[anchor=south] at ($(group c2r4.north east)!0.5!(group c3r4.north west)$){\texttt{nkithr} (Deterministic)};
         \end{tikzpicture}
         \caption{Empirical Complexity of Finding the Minimum}
         \label{fig:mincplx}
@@ -589,10 +600,11 @@
               group style={
                 group size=4 by 4,
                 xlabels at=edge bottom,
-                ylabels at=edge left
+                ylabels at=edge left,
+                vertical sep=0.5in
               },
-              height=1.75in,
-              width=1.75in,
+              height=1.5in,
+              width=1.5in,
               xlabel=$n$,
               ylabel=$t$ (ns),
               tick label style={font=\tiny},
@@ -623,6 +635,10 @@
             \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{r}
           \end{groupplot}
           \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+          \node[anchor=south] at ($(group c2r1.north east)!0.5!(group c3r1.north west)$){\texttt{nkith}};
+          \node[anchor=south] at ($(group c2r2.north east)!0.5!(group c3r2.north west)$){\texttt{nkithr} (Knuth-B)};
+          \node[anchor=south] at ($(group c2r3.north east)!0.5!(group c3r3.north west)$){\texttt{nkithr} (Default)};
+          \node[anchor=south] at ($(group c2r4.north east)!0.5!(group c3r4.north west)$){\texttt{nkithr} (Deterministic)};
         \end{tikzpicture}
         \caption{Empirical Complexity of Finding the Median}
         \label{fig:mediancplx}
