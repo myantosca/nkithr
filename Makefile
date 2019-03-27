@@ -36,6 +36,7 @@ clean: clean-doc-$(REPORT_NAME)
 	@rm -f *.o
 	@rm -f nkmax
 	@rm -f nkith
+	@rm -r nkithr
 	@rm -f popldump
 
 superclean-doc-%:
