@@ -255,6 +255,119 @@
         \end{algorithmic}
       \end{algorithm}
     }
+    \begin{theorem}
+      \label{thm:nkithr}
+      Algorithm~\ref{alg:nkithr} determines the $i$th element of a set of $n$ numbers
+      distributed over $k$ nodes with time complexity $O(\log n)$ rounds and message complexity
+      $O(k \log n)$ on average.
+    \end{theorem}
+    \begin{lemma}
+      \label{lem:nkithr-t}
+      Algorithm~\ref{alg:nkithr} determines the $i$th element of a set of $n$ numbers
+      distributed over $k$ nodes with time complexity $O(\log n)$ rounds on average.
+    \end{lemma}
+    \begin{proof}
+      The proof follows the sketch outlined by the proof for the time
+      complexity of Randomized Quicksort given in the sequential algorithms
+      text by Pandurangan\autocite[168]{ALG}. For simplicity, we limit the proof to the
+      case where the $i$th element is the median, i.e., $\lfloor \frac{n}{2} \rfloor$
+      among $n$ numbers and the pivot selection is random and independent of the
+      population distribution.
+      \paragraph{}{
+        The first order of business is to simplify the proof so that we can
+        speak in global terms without having to perform complicated
+        if not intractable calculations on local probabilities.
+      }
+      \begin{lemma}
+        \label{lem:goodpivot}
+        The pivot selected by Algorithm~\ref{alg:random-pivot-select} chooses any
+        member of the live (i.e., considered) population $n_j$ in the $j$th iteration
+        with uniform probability $\frac{1}{n_j}$.
+      \end{lemma}
+      \begin{proof}
+        The local candidate is selected from the local live population of size $m_j = b_{u,j} - b_{l,j}$
+        with $\frac{1}{m_j}$ probability. The corresponding weight sent to the root
+        node with the candidate is $m_j$. The global live population is faithfully
+        recorded at the root as $n_j = \sum_{h=0}^{k-1} m_{h,j}$. The weights are normalized
+        against $n_j$ so that each becomes respectively $\frac{m_{h,j}}{n_j}$.
+        The node identifier is selected according to a discrete distribution weighted
+        with the aforementioned weights. The probability that any given element
+        will be selected as the pivot is given as follows:
+        \begin{align*}
+          P(\text{element selected globally})
+          &= P(\text{node selected globally}|\text{element selected locally})\\
+          &\phantom{= }\cdot P(\text{element selected locally}) \\
+          &= \frac{m_{h,j}}{n_j} \cdot \frac{1}{m_{h,j}} \\
+          &= \frac{1}{n_j}
+        \end{align*}
+        Thus, Algorithm~\ref{alg:random-pivot-select} selects each pivot in each
+        iteration from among the live element population with uniform probability.
+      \end{proof}
+      \paragraph{}{
+        By Lemma~\ref{lem:goodpivot}, we can consider the partitioning of the population
+        in a global sense so long as the implementation faithfully reports the cardinalities
+        of the subsets of $S_1$ (less than the pivot) and $P$ (equal to the pivot).
+        We know that this is the case since the element-wise comparisons done locally
+        appropriately bin the live local population into the respective subsets,
+        and the cardinalities of the subsets are summed at the root and rebroadcast
+        to all nodes for the purpose of updating the live population boundaries.
+      }
+      \paragraph{}{
+        As with the proof for Theorem 8.8\autocite[168-169]{ALG}, let us consider then
+        the division of outcomes into good and bad sets. Let the good outcome be that
+        where the pivot is chosen in the middle third of the live global population, i.e.,
+        that neither $|S_1|$ nor $|S_2|$ (greater than the pivot) exceeds $\frac{2n_j}{3}$,
+        and let the bad outcome be the converse.
+      }
+      \paragraph{}{
+        We cannot have more than $\log_{3/2} n$ good outcomes, or else the population will
+        have been exhausted by the constant reduction by $\frac{2}{3}$. , the expectation for execution time is $3c\log n$,
+        where $c$ is a fixed constant independent of the problem size such that
+        $\log_{3/2} n < c \log n$.
+      }
+      \paragraph{}{
+        If we consider longer paths of execution that have at most $c \log n$ good outcomes
+        but are longer than that, i.e., paths of length $ac \log n$ for some $a > 1$, we can
+        use the Chernoff Lower Tail Bound\autocite[323]{ALG} to provide a probabilistic
+        limit on the execution time in terms of number of iterations.
+        Since good outcomes occur with probability $\frac{1}{3}$, the expectation of good
+        outcomes on a path of length $ac \log n$ would be $\frac{1}{3}ac \log n$.
+        By choosing $\delta = 3/a$, we get a probability $P(X_{good} < c \log n) \leq \frac{1}{n^2}$.
+        Consequently, with $n$ elements in play at the start, the single
+        path probability becomes union bounded as $1/n$\autocite[169]{ALG}.
+      }
+      \paragraph{}{
+        Thus, the number of iterations is on the order of $O(\log n)$ rounds with
+        high probability since the greatest possible probability to exceed $ac \log n$
+        rounds is $1/n$.
+      }
+    \end{proof}
+    \begin{lemma}
+      \label{lem:nkithr-m}
+      Algorithm~\ref{alg:nkithr} determines the $i$th element of a set of $n$ numbers
+      distributed over $k$ nodes with message complexity $O(k \log n)$ on average.
+    \end{lemma}
+    \begin{proof}
+      By Lemma~\ref{lem:nkithr-t}, we know that Algorithm~\ref{alg:nkithr} takes
+      $O(\log n)$ iterations on average. Within each iteration, the following message exchanges occur:
+      \begin{enumerate}
+      \item{$k - 1$ nodes send pivot candidates to the root.}
+      \item{$k - 1$ nodes send pivot weights to the root.}
+      \item{The root sends the pivot-elect to $k - 1$ nodes.}
+      \item{$k - 1$ nodes send local cardinalities $s_1$ and $s_p$ to the root.}
+      \item{The root sends global cardinalities $|S_1|$ and $|S_1| + |P|$ to $k - 1$ nodes.}
+      \end{enumerate}
+      With 5 exchanges of $k - 1$ messages, each iteration produces $5k - 5$. Even if we are
+      nitpicky and account the 2 element local cardinality messages as 2 exchanges, we still
+      only have $6k - 6$, which in either case is $O(k)$ messages per iteration. Multiplying
+      by $O(\log n)$ iterations, we arrive at total message complexity of $O(k \log n)$,
+      which was to be shown.
+    \end{proof}
+    \begin{proof}
+      By Lemma~\ref{lem:nkithr-t} and Lemma~\ref{lem:nkithr-m}, we see that the two
+      complexities are satisfied. Hence, Theorem~\ref{thm:nkithr} holds.
+    \end{proof}
+  }
 }
 
 \section{Results}{
