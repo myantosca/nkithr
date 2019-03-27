@@ -81,7 +81,16 @@
 \tableofcontents
 
 \section{Introduction}{
-
+  \paragraph{}{
+    As problem sizes continue to scale, it would behoove algorithmic researchers to explore
+    not only more distributed and decentralized approaches but especially randomized versions
+    of these approaches. One particular information retrieval problem, namely the selection
+    of the $i$th element among a large set of $n$ inherently ordered elements provides a basic
+    but effective overview of some of the challenges at hand and the benefits that a randomized,
+    distributed approach provides along with some of the insights that implementing such a
+    system may offer, not only in the field of randomized algorithms, but in the field of
+    deterministic algorithms, as well.
+  }
 }
 
 \section{Analysis}{
@@ -92,6 +101,7 @@
         \caption{\textsc{MP-Ith-Select}, Distributed Algorithm for Selecting the \emph{i}th Element of \emph{n} Numbers}
         \begin{algorithmic}
           \label{alg:nkith}
+          \REQUIRE{$G$, a PRNG}\autocite{mt19337}
           \REQUIRE{$n$, global population size}
           \REQUIRE{$r$, node rank}
           \REQUIRE{$k$, number of nodes}
@@ -116,7 +126,7 @@
           \FOR{$j = 0 \text{ to } m - 1$}{
             \STATE{$M[j] = \textsc{Generate}(G)$}
           }\ENDFOR
-          \STATE{\textsc{Qsort}($M$)}
+          \STATE{\textsc{Qsort}($M$)\autocite{qsort}}
           \WHILE{\neg ($|S_1| < i$ and $|S_1| + |P| \geq i$)}{
             \STATE{$c_r \gets M[b_l + (b_u - b_l) / 2]$}
             \STATE{All nodes send $c_r$ to the root node.}
@@ -161,13 +171,13 @@
           \REQUIRE{$k$, number of nodes}
           \REQUIRE{$b_l$, live local population lower bound}
           \REQUIRE{$b_u$, live local population upper bound}
-          \STATE{$G_{cand} \gets$ uniform distribution over $[b_l, b_u)$}
+          \STATE{$G_{cand} \gets$ uniform distribution over $[b_l, b_u)$}\autocite{uniformintdist}
           \STATE{$c_r \gets M[\textsc{Generate}(G_{cand})]$}
           \STATE{$w_r \gets b_u - b_l$}
           \STATE{All nodes send $c_r$ and $w_r$ to the root node.}
           \IF{$r = 0$}{
             \STATE{$w \gets \sum_{r=0}^{k-1} w_r$}
-            \STATE{$G_{pivot} \gets$ distribution over $[0,k)$ weighted by $w_r/w$.}
+            \STATE{$G_{pivot} \gets$ distribution over $[0,k)$ weighted by $w_r/w$.}\autocite{discretedist}
             \STATE{$p = \textsc{Generate}(G_{pivot})$}
             \STATE{$c = c_p$}
             \STATE{Broadcast $c$ to all nodes.}
@@ -182,7 +192,7 @@
         \caption{\textsc{MP-Ith-Select-Revised}, Distributed Algorithm for Selecting the \emph{i}th Element of \emph{n} Numbers}
         \begin{algorithmic}
           \label{alg:nkithr}
-          \REQUIRE{$G_{popl}$, a population PRNG}
+          \REQUIRE{$G_{popl}$, a population PRNG}\autocite{mt19337}
           \REQUIRE{$n$, global population size}
           \REQUIRE{$r$, node rank}
           \REQUIRE{$k$, number of nodes}
