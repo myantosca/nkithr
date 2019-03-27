@@ -379,153 +379,279 @@
 }
 
 \section{Results}{
-  \paragraph{}{
-    \begin{figure}
-      \begin{tikzpicture}
-        \footnotesize
-        \begin{groupplot}[
-            group style={
-              group size=4 by 5,
-              xlabels at=edge bottom,
-              ylabels at=edge left
-            },
-            height=1.75in,
-            width=1.75in,
-            xlabel=$n$,
-            ylabel=$t$ (ns),
-            tick label style={font=\tiny},
-            label style={font=\tiny},
-            legend style={font=\tiny},
-            legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
-            legend to name=nprocs
-          ]
-          % nkith
-          \nextgroupplot[group/empty plot]
-          \linregplots{\footnotesize Total Time}{./results/nkith/nkith}{.max}{n}{t}
-          \linregplots{\footnotesize Messages}{./results/nkith/nkith}{.max}{n}{m}
-          \linregplots{\footnotesize Rounds}{./results/nkith/nkith}{.max}{n}{r}
-          % nkithr (Knuth-B)
-          \linregplots{\footnotesize Exchange Time}{./results/nkithr-knuthb/nkithr}{.max}{n}{t}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{T}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{m}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{r}
-          % nkithr (Standard)
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{t}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{T}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{m}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{r}
-          % nkithr -D
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{t}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{T}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{m}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{r}
-          % nkmax
-          \nextgroupplot[group/empty plot]
-          \linregplots{}{./results/nkmax/nkmax}{}{n}{t}
-          \linregplots{}{./results/nkmax/nkmax}{}{n}{m}
-          \linregplots{}{./results/nkmax/nkmax}{}{n}{r}
-        \end{groupplot}
-        \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
-      \end{tikzpicture}
-      \caption{Empirical Complexity of Finding the Max}
-      \label{fig:maxcplx}
-    \end{figure}
+
+  \subsection{Test Procedures}{
+    \paragraph{}{
+      Tests to validate correctness were performed locally on a dual-core laptop
+      \footnote{2 x Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz.} running Pop!OS.
+      \footnote{An Ubuntu 18.04 variant.}
+      Tests for which results were collected systematically and graphed were
+      done on the UH \texttt{crill} cluster with the following parameters:
+      \begin{itemize}
+      \item{$n \in 2^{[10,28]}$, the total population size}
+      \item{$k \in \{1,2,4,8,16,32\}$, the number of distributed nodes}
+      \item{$i \in \{1, n/2, n\}$, the sought element index}
+      \end{itemize}
+      Each parameter combination was executed at least 10 times.
+    }
+    \paragraph{}{
+      Several executables or versions of executables were used over the course
+      of experimentation. Here are the primary variants.
+    }
+    \paragraph{\texttt{nkmax}}{
+      A specialized implementation that used a simple local variable and stream
+      processing to reduce local candidacy to one element during the generation phase.
+    }
+    \paragraph{\texttt{nkith}}{
+      An ill-considered attempt to try and pre-sort local populations so that
+      the exchange phases were simple cursor movements.
+    }
+    \paragraph{\texttt{nkithr}}{
+      A revised version of \texttt{nkith} that properly implemented a distributed
+      version of the given sequential algorithm. The first set of test runs used
+      \texttt{std::default\_random\_engine}\autocite{random}. Out of a (largely unfounded)
+      concern that the C++ default random engine was generating skewed pivot choices,
+      the second set of test runs used \texttt{std::knuthb}\autocite{knuthb}.
+      A third set of test runs was executed with a deterministic pivot selection mechanism
+      similar to that used in \texttt{nkith} but with additional logic
+      to skip candidates supplied by nodes whose search spaces were
+      actually \emptyset.
+    }
+    \paragraph{\texttt{popldump}}{
+      In order to empirically verify correctness, each of the above programs
+      was instrumented with MPIO\autocite{MPIO} commands so that the
+      entire population of a given run could be saved and read later.
+      The program takes the native byte representations of the unsigned
+      32-bit integers comprising the population and prints their decimal
+      form with one number per line.
+    }
+    \paragraph{}{
+      The reader is directed to the accompanying \texttt{README.md} for
+      explicit usage instructions on the various programs as well as
+      for a deeper explanation of implementation considerations,
+      engineering tradeoffs, and known issues with the programs (mostly
+      concerning the absence of defensive logic against bad command-line
+      arguments). A command sequence for verifying the output correctness
+      is given in the section on \texttt{popldump}. It should be noted
+      that the MPI 2.1 standard\autocite{MPI21} and g++-7.2 was used for
+      development since they were available through the development laptop's
+      package system, but the program compiled and ran on the \texttt{crill}
+      cluster with gcc-5.3.0 and MPI 3.0. The code requires the C++-11 standard.
+    }
+  }
+  \subsection{Finding the Maximum}{
+    \paragraph{}{
+      \begin{figure}
+        \begin{tikzpicture}
+          \footnotesize
+          \begin{groupplot}[
+              group style={
+                group size=4 by 5,
+                xlabels at=edge bottom,
+                ylabels at=edge left
+              },
+              height=1.75in,
+              width=1.75in,
+              xlabel=$n$,
+              ylabel=$t$ (ns),
+              tick label style={font=\tiny},
+              label style={font=\tiny},
+              legend style={font=\tiny},
+              legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
+              legend to name=nprocs
+            ]
+            % nkith
+            \nextgroupplot[group/empty plot]
+            \linregplots{\footnotesize Total Time}{./results/nkith/nkith}{.max}{n}{t}
+            \linregplots{\footnotesize Messages}{./results/nkith/nkith}{.max}{n}{m}
+            \linregplots{\footnotesize Rounds}{./results/nkith/nkith}{.max}{n}{r}
+            % nkithr (Knuth-B)
+            \linregplots{\footnotesize Exchange Time}{./results/nkithr-knuthb/nkithr}{.max}{n}{t}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{T}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{m}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.max}{n}{r}
+            % nkithr (Standard)
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{t}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{T}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{m}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.max}{n}{r}
+            % nkithr -D
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{t}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{T}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{m}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.max}{n}{r}
+            % nkmax
+            \nextgroupplot[group/empty plot]
+            \linregplots{}{./results/nkmax/nkmax}{}{n}{t}
+            \linregplots{}{./results/nkmax/nkmax}{}{n}{m}
+            \linregplots{}{./results/nkmax/nkmax}{}{n}{r}
+          \end{groupplot}
+          \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+        \end{tikzpicture}
+        \caption{Empirical Complexity of Finding the Maximum}
+        \label{fig:maxcplx}
+      \end{figure}
+    }
+    \paragraph{}{
+      The empirical complexity of finding the maximum is shown in Figure~\ref{fig:maxcplx}.
+      The bespoke \texttt{nkmax} implementation performs best in terms of time and
+      message complexity. This is to be expected since finding the max requires a
+      simple counter at each node and only one round of exchange. The rejection
+      occurs during generation. Consequently, the total time required for \texttt{nkmax}
+      corresponds to the total time minus the exchange time for \texttt{nkithr}.
+    }
+    \paragraph{}{
+      Interestingly, the span of the time complexity in terms of rounds corresponds
+      almost exactly to the base-2 exponent of the population size for \texttt{nkithr}.
+      The original \texttt{nkith} implementation with its naive deterministic pivot
+      selection appears to have double the span of the revised version whether the pivot
+      was chosen deterministically or at random. This is reasonable since the revised
+      deterministic pivot selection depends on the calculated pivot weights to void
+      ``non-participating'' nodes and avoid wasting iterations.
+    }
+    \paragraph{}{
+      The total time complexity of \texttt{nkith} is clearly overshadowed by the
+      local pre-sort time since the doubling of exchange time is not enough to
+      explain the difference of \emph{half an order of magnitude} with respect to
+      \texttt{nkithr}. It should be noted that early experiments with trying to do
+      an insertion sort during the generation phase performed even more absymally,
+      as might be expected.
+    }
+  }
+  \subsection{Finding the Minimum}{
+    \paragraph{}{
+      \begin{figure}
+        \begin{tikzpicture}
+          \footnotesize
+          \begin{groupplot}[
+              group style={
+                group size=4 by 4,
+                xlabels at=edge bottom,
+                ylabels at=edge left
+              },
+              height=1.75in,
+              width=1.75in,
+              xlabel=$n$,
+              ylabel=$t$ (ns),
+              tick label style={font=\tiny},
+              label style={font=\tiny},
+              legend style={font=\tiny},
+              legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
+              legend to name=nprocs
+            ]
+            % nkith
+            \nextgroupplot[group/empty plot]
+            \linregplots{Total Time}{./results/nkith/nkith}{.min}{n}{t}
+            \linregplots{Messages}{./results/nkith/nkith}{.min}{n}{m}
+            \linregplots{Rounds}{./results/nkith/nkith}{.min}{n}{r}
+            % nkithr (Knuth-B)
+            \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.min}{n}{t}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{T}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{m}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{r}
+            % nkithr (Standard)
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{t}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{T}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{m}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{r}
+            % nkithr -D
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{t}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{T}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{m}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{r}
+          \end{groupplot}
+          \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+        \end{tikzpicture}
+        \caption{Empirical Complexity of Finding the Minimum}
+        \label{fig:mincplx}
+      \end{figure}
+    }
+    \paragraph{}{
+      Though not strictly part of the assignment, the time and message complexity for
+      finding the minimum was tested as a sanity check on the implementation consistency.
+      The graphs (see Figure~\ref{fig:mincplx}) are similar to those charted for finding
+      the max with the exception of a bespoke \texttt{nkmin} program that was not created.
+    }
+    \paragraph{}{
+      In future implementations of \texttt{nkithr}, it might be worth the added
+      code complexity to add case logic for the minimum and maximum cases that employ
+      the more specialized algorithms since finding the extrema can be a frequent use
+      case of the more general $i$th selection in practice.
+    }
   }
 
-  \paragraph{}{
-    \begin{figure}
-      \begin{tikzpicture}
-        \footnotesize
-        \begin{groupplot}[
-            group style={
-              group size=4 by 4,
-              xlabels at=edge bottom,
-              ylabels at=edge left
-            },
-            height=1.75in,
-            width=1.75in,
-            xlabel=$n$,
-            ylabel=$t$ (ns),
-            tick label style={font=\tiny},
-            label style={font=\tiny},
-            legend style={font=\tiny},
-            legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
-            legend to name=nprocs
-          ]
-          % nkith
-          \nextgroupplot[group/empty plot]
-          \linregplots{Total Time}{./results/nkith/nkith}{.min}{n}{t}
-          \linregplots{Messages}{./results/nkith/nkith}{.min}{n}{m}
-          \linregplots{Rounds}{./results/nkith/nkith}{.min}{n}{r}
-          % nkithr (Knuth-B)
-          \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.min}{n}{t}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{T}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{m}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.min}{n}{r}
-          % nkithr (Standard)
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{t}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{T}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{m}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.min}{n}{r}
-          % nkithr -D
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{t}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{T}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{m}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.min}{n}{r}
-        \end{groupplot}
-        \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
-      \end{tikzpicture}
-      \caption{Empirical Complexity of Finding the Min}
-      \label{fig:mincplx}
-    \end{figure}
+  \subsection{Finding the Median}{
+    \paragraph{}{
+      \begin{figure}
+        \begin{tikzpicture}
+          \footnotesize
+          \begin{groupplot}[
+              group style={
+                group size=4 by 4,
+                xlabels at=edge bottom,
+                ylabels at=edge left
+              },
+              height=1.75in,
+              width=1.75in,
+              xlabel=$n$,
+              ylabel=$t$ (ns),
+              tick label style={font=\tiny},
+              label style={font=\tiny},
+              legend style={font=\tiny},
+              legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
+              legend to name=nprocs
+            ]
+            % nkith
+            \nextgroupplot[group/empty plot]
+            \linregplots{Total Time}{./results/nkith/nkith}{.med}{n}{t}
+            \linregplots{Messages}{./results/nkith/nkith}{.med}{n}{m}
+            \linregplots{Rounds}{./results/nkith/nkith}{.med}{n}{r}
+            % nkithr (Knuth-B)x
+            \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.med}{n}{t}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{T}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{m}
+            \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{r}
+            % nkithr (Standard)
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{t}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{T}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{m}
+            \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{r}
+            % nkithr -D
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{t}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{T}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{m}
+            \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{r}
+          \end{groupplot}
+          \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
+        \end{tikzpicture}
+        \caption{Empirical Complexity of Finding the Median}
+        \label{fig:mediancplx}
+      \end{figure}
+    }
+    \paragraph{}{
+      The complexities observed in finding the median (see Figure~\ref{fig:mediancplx})
+      are again similar to those seen for the maximum and minimum, but with some striking
+      differences. The time complexity for \texttt{nkithr} to find the median
+      was longer by about half in terms of wall-clock time and rounds.
+      The pivot selection was notably worse in the deterministic \texttt{nkithr}
+      case, at least in terms of variance, if not mean, over the rounds required.
+      In retrospect, a better deterministic selection would have been made
+      by simply choosing the candidate with the maximum pre-normalization weight
+      instead of the first non-zero weight.
+    }
+    \paragraph{}{
+      Some of this behavior may be explained by the fact that random selection
+      leading to the extrema heavily favors reduction from one side of the
+      equation across all nodes, and so larger fractions of the population
+      are taken out of consideration in each iteration. With the median,
+      the side on which the reduction occurs may oscillate slowly until
+      convergence.
+    }
   }
+}
 
   \paragraph{}{
-    \begin{figure}
-      \begin{tikzpicture}
-        \footnotesize
-        \begin{groupplot}[
-            group style={
-              group size=4 by 4,
-              xlabels at=edge bottom,
-              ylabels at=edge left
-            },
-            height=1.75in,
-            width=1.75in,
-            xlabel=$n$,
-            ylabel=$t$ (ns),
-            tick label style={font=\tiny},
-            label style={font=\tiny},
-            legend style={font=\tiny},
-            legend entries={,$k = 1$,,$k = 2$,,$k = 4$,,$k = 8$,,$k = 16$,,$k = 32$},
-            legend to name=nprocs
-          ]
-          % nkith
-          \nextgroupplot[group/empty plot]
-          \linregplots{Total Time}{./results/nkith/nkith}{.med}{n}{t}
-          \linregplots{Messages}{./results/nkith/nkith}{.med}{n}{m}
-          \linregplots{Rounds}{./results/nkith/nkith}{.med}{n}{r}
-          % nkithr (Knuth-B)
-          \linregplots{Exchange Time}{./results/nkithr-knuthb/nkithr}{.med}{n}{t}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{T}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{m}
-          \linregplots{}{./results/nkithr-knuthb/nkithr}{.med}{n}{r}
-          % nkithr (Standard)
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{t}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{T}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{m}
-          \linregplots{}{./results/nkithr-stdrnd/nkithr}{.med}{n}{r}
-          % nkithr -D
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{t}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{T}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{m}
-          \linregplots{}{./results/nkithr-d/nkithr-d}{.med}{n}{r}
-        \end{groupplot}
-        \node at (group c1r1) {\pgfplotslegendfromname{nprocs}};
-      \end{tikzpicture}
-      \caption{Empirical Complexity of Finding the Median}
-      \label{fig:mediancplx}
-    \end{figure}
+    The inherent power of algorithm randomization is aptly demonstrated in the
   }
 
   \section{Conclusions}{
