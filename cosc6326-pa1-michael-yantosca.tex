@@ -91,7 +91,7 @@
         \footnotesize
         \caption{\textsc{MP-Ith-Select}, Distributed Algorithm for Selecting the \emph{i}th Element of \emph{n} Numbers}
         \begin{algorithmic}
-          \REQUIRE{$G$, a PRNG}
+          \label{alg:nkith}
           \REQUIRE{$n$, global population size}
           \REQUIRE{$r$, node rank}
           \REQUIRE{$k$, number of nodes}
@@ -147,7 +147,6 @@
           }\ENDWHILE
           \STATE{The root node announces $c$ as the $i$th element.}
         \end{algorithmic}
-        \label{alg:nkith}
       \end{algorithm}
     }
   }
@@ -158,6 +157,7 @@
         \footnotesize
         \caption{\textsc{Random-Pivot-Select}, Distributed Algorithm for Selecting a Pivot Candidate}
         \begin{algorithmic}
+          \label{alg:random-pivot-select}
           \REQUIRE{$k$, number of nodes}
           \REQUIRE{$b_l$, live local population lower bound}
           \REQUIRE{$b_u$, live local population upper bound}
@@ -173,7 +173,6 @@
             \STATE{Broadcast $c$ to all nodes.}
           }\ENDIF
         \end{algorithmic}
-        \label{alg:random-pivot-select}
       \end{algorithm}
     }
 
@@ -182,10 +181,12 @@
         \footnotesize
         \caption{\textsc{MP-Ith-Select-Revised}, Distributed Algorithm for Selecting the \emph{i}th Element of \emph{n} Numbers}
         \begin{algorithmic}
+          \label{alg:nkithr}
           \REQUIRE{$G_{popl}$, a population PRNG}
           \REQUIRE{$n$, global population size}
           \REQUIRE{$r$, node rank}
           \REQUIRE{$k$, number of nodes}
+          \REQUIRE{$c$, the current pivot}
           \REQUIRE{
             \[
               m \gets n \div k +
@@ -205,7 +206,7 @@
             \STATE{$M[j] = \textsc{Generate}(G_{popl})$}
           }\ENDFOR
           \WHILE{\neg ($|S_1| < i$ and $|S_1| + |P| \geq i$)}{
-            \STATE{$\textsc{Random-Pivot-Select}(b_l, b_u)$}
+            \STATE{$\textsc{Random-Pivot-Select}(b_l, b_u)$ \COMMENT{Algorithm~\ref{alg:random-pivot-select}}}
             \STATE{$s_1 \gets b_l$}
             \STATE{$s_p \gets 0$}
             \STATE{$s_2 \gets b_u$}
@@ -226,7 +227,7 @@
               \STATE{$Q[j] \gets c$}
             }\ENDFOR
             \IF{$b_l < b_u$}{
-              \STATE{Copy $Q[b_l, b_u)$ to $M[b_l, b_u)$.}
+              \STATE{Copy $Q[b_l, b_u-1]$ to $M[b_l, b_u-1]$.}
             }\ENDIF
             \STATE{All nodes send $s_1$ and $s_p$ to the root node.}
             \IF{$r = 0$}{
@@ -242,10 +243,8 @@
           }\ENDWHILE
           \STATE{The root node announces $c$ as the $i$th element.}
         \end{algorithmic}
-        \label{alg:nkithr}
       \end{algorithm}
-     }
-   }
+    }
 }
 
 \section{Results}{
