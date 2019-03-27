@@ -650,12 +650,29 @@
   }
 }
 
+\section{Conclusions}{
   \paragraph{}{
     The inherent power of algorithm randomization is aptly demonstrated in the
+    trial results. Choosing a deterministic algorithm is not difficult, but
+    in almost all cases, the random versions outperformed the implementations
+    which used deterministic methods. It would appear that even the potentially
+    best (as yet unimplemented) deterministic pivoting method simply copies the
+    behavior of the randomized pivot selection.
   }
-
-  \section{Conclusions}{
-
+  \paragraph{}{
+    The results also serve as a clear evidence that no amount of ``cleverness''
+    in implementation can overcome the tyranny of scale. While familiarity with
+    implementation details improved the performance of the randomized algorithm
+    over more naive possible implementations of the same algorithm, it needed
+    the solid algorithmic found upon which it could build.
+  }
+  \paragraph{}{
+    The congress of ideas between the deterministic and randomized subfields
+    of distributed algorithms is best kept free and fluid. Whether it is a
+    deterministic algorithm informed by a randomized experiment or a recognition
+    of a common special case that can be more rapidly decomposed in a deterministic
+    fashion than the unbiased random approach would allow, the field as a whole
+    will be richer for it.
   }
 }
 
