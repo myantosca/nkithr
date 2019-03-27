@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
     if (S[0] > i - 1) {
       ub = s[0];
     }
-    // If |S1| + |P| < i then search in the range (s[1],ub), i.e., above the pivot.
+    // If |S1| + |P| < i then search in the range [s[1],ub), i.e., above the pivot.
     else if (S[1] < i) {
       lb = s[1];
     }
